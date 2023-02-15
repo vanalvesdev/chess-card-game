@@ -39,19 +39,22 @@ public class Deck : MonoBehaviour
         
     }
 
-    void instatiateCards(GameObject cardPrefab, int numCard)
+    void instatiateCards(GameObject cardPrefab, int numCard, Transform previousCard)
     {
         for (int x = 1; x <= numCard; x++) 
-        {
+        {   
             GameObject card = Instantiate(cardPrefab, transform.position, Quaternion.identity);
+            card.GetComponent<Draw>().previousDrawOnHand = previousCard;
+            cards.Add(card);
         }
     }
 
 
-    public void Draw()
+    public GameObject Draw(Transform previousCard)
     {
         //GameObject cardToDraw = cards[0];
         //cards.RemoveAt(0);
-        instatiateCards(knightPrefab, 1);
+        instatiateCards(knightPrefab, 1, previousCard);
+        return cards.LastOrDefault();
     }
 }

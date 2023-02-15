@@ -33,9 +33,12 @@ public class Card : MonoBehaviour
 
     public MoveCard move;
 
-    MoveCard.CustomTransform targetPoint;
+    CustomTransform targetPoint;
 
-    MoveCard.CustomTransform startPoint;
+    CustomTransform startPoint;
+
+    public float onHandPositionDelta = 1.5f;
+    public float onHandRotationDelta = 7f;
 
     public void Attack()
     {
@@ -82,14 +85,14 @@ public class Card : MonoBehaviour
 
             if (startPoint == null)
             {
-                startPoint = MoveCard.CustomTransform.builder()
+                startPoint = CustomTransform.builder()
                 .position(transform.position)
                 .rotation(MoveCard.NormalizeRotation(transform.rotation.eulerAngles))
                 .scale(transform.localScale)
                 .Build();
             }
 
-            MoveCard.CustomTransform target = MoveCard.CustomTransform.builder()
+            CustomTransform target = CustomTransform.builder()
             .position(position)
             .rotation(rotation)
             .scale(scale)
@@ -133,13 +136,13 @@ public class Card : MonoBehaviour
         {
             Vector3 euler = MoveCard.NormalizeRotation(transform.rotation.eulerAngles);
 
-            Vector3 rotation = new Vector4(euler.x, euler.y, euler.z + 7);
+            Vector3 rotation = new Vector4(euler.x, euler.y, euler.z + onHandRotationDelta);
 
             if (rotation.z == roundNear(360)) rotation.z = 0;
 
-            Vector3 position = new Vector3(transform.position.x - 0.5f, transform.position.y, transform.position.z);
+            Vector3 position = new Vector3(transform.position.x - onHandPositionDelta, transform.position.y, transform.position.z);
 
-            targetPoint = MoveCard.CustomTransform.builder()
+            targetPoint = CustomTransform.builder()
                 .position(position)
                 .rotation(rotation)
                 .scale(transform.localScale)
@@ -158,11 +161,11 @@ public class Card : MonoBehaviour
         {
             Vector4 euler = MoveCard.fixNegativeRotation(Vector3.back, MoveCard.NormalizeRotation(transform.rotation.eulerAngles));
 
-            Vector4 rotation = new Vector4(euler.x, euler.y, roundUp(euler.z) - 7, euler.w);
+            Vector4 rotation = new Vector4(euler.x, euler.y, roundUp(euler.z) - onHandRotationDelta, euler.w);
 
-            Vector3 position = new Vector3(transform.position.x + 0.5f, transform.position.y, transform.position.z);
+            Vector3 position = new Vector3(transform.position.x + onHandPositionDelta, transform.position.y, transform.position.z);
 
-            targetPoint = MoveCard.CustomTransform.builder()
+            targetPoint = CustomTransform.builder()
                 .position(position)
                 .rotation(rotation)
                 .scale(transform.localScale)
@@ -179,7 +182,7 @@ public class Card : MonoBehaviour
     {
         if (targetPoint != null && guid.Equals(targetPoint.id))
         {
-            startPoint = MoveCard.CustomTransform.builder().Clone(targetPoint);
+            startPoint = CustomTransform.builder().Clone(targetPoint);
         }
     }
 

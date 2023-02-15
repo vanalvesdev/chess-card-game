@@ -7,15 +7,22 @@ public class Draw : MonoBehaviour
 {
 
     Card card;
-    MoveCard.CustomTransform drawFirstStep;
-    MoveCard.CustomTransform drawSecondStep;
-    MoveCard.CustomTransform handPoint;
+    CustomTransform drawFlipSpot;
+    CustomTransform drawShowCaseSpot;
+    CustomTransform drawOnHand;
     MoveCard move;
+
+    public Transform previousDrawOnHand;
+
+
+    //Draw animator transform values
+    Vector3[] drawFlipSpotValues = {new Vector3(6.7f, -1.4f, 0),new Vector3(0, 90, 0), new Vector3(1.6f, 1.6f, 1.0f)};
+    Vector3[] drawShowCaseSpotValues = { new Vector3(6.0f, 0f, 0), new Vector3(0, 0, 0), new Vector3(1.6f, 1.6f, 1.0f) };
+    Vector3[] drawOnHandValues = { new Vector3(0f, -4.3f, 0), new Vector3(0, 0, 0), new Vector3(0.8f, 0.8f, 1.0f) };
 
     // Start is called before the first frame update
     void Start()
     {
-        transform.position = new Vector3(7.4f, -2.8f, 0);
         card = GetComponent<Card>();
         move = GetComponent<MoveCard>();
         BuildTransforms();
@@ -30,31 +37,40 @@ public class Draw : MonoBehaviour
 
     void BuildTransforms()
     {
+        if(previousDrawOnHand != null)
+        {
+            drawOnHandValues[0] = new Vector3(previousDrawOnHand.position.x + card.onHandPositionDelta, previousDrawOnHand.position.y, previousDrawOnHand.position.z);
+            
+            Vector4 euler = MoveCard.fixNegativeRotation(Vector3.back, MoveCard.NormalizeRotation(previousDrawOnHand.rotation.eulerAngles));
 
-        drawFirstStep = BuildTransform(new Vector3(6.7f, -1.4f, 0),
-            new Vector3(0, 90, 0), new Vector3(1.6f, 1.6f, 1.0f), 0.5f);
+            Vector4 rotation = new Vector4(euler.x, euler.y, roundUp(euler.z) - card.onHandRotationDelta, euler.w);
 
-        drawSecondStep = BuildTransform(drawFirstStep.position,
-            new Vector3(6.0f, 0f, 0),
-            drawFirstStep.rotation,
-            new Vector3(0, 0, 0), 
-            drawFirstStep.scale,
-            new Vector3(1.6f, 1.6f, 1.0f),
+            drawOnHandValues[1] = rotation;
+        }
+
+        drawFlipSpot = BuildTransform(drawFlipSpotValues[0], drawFlipSpotValues[1], drawFlipSpotValues[2], 0.5f);
+
+        drawShowCaseSpot = BuildTransform(drawFlipSpot.position,
+            drawShowCaseSpotValues[0],
+            drawFlipSpot.rotation,
+            drawShowCaseSpotValues[1], 
+            drawFlipSpot.scale,
+            drawShowCaseSpotValues[2],
             0.5f);
-
-        handPoint = BuildTransform(drawSecondStep.position,
-            new Vector3(0, -4.3f, 0),
-            drawSecondStep.rotation,
-            new Vector3(0, 0, 0),
-            drawSecondStep.scale,
-            new Vector3(0.8f, 0.8f, 1.0f),
+        
+        drawOnHand = BuildTransform(drawShowCaseSpot.position,
+            drawOnHandValues[0],
+            drawShowCaseSpot.rotation,
+            drawOnHandValues[1],
+            drawShowCaseSpot.scale,
+            drawOnHandValues[2],
             1.0f);
     }
 
-    MoveCard.CustomTransform BuildTransform(Vector3 position, Vector4 rotation, Vector3 scale, float time)
+    CustomTransform BuildTransform(Vector3 position, Vector4 rotation, Vector3 scale, float time)
     {
 
-        return MoveCard.CustomTransform.builder()
+        return CustomTransform.builder()
             .position(position)
             .rotation(rotation)
             .scale(scale)
@@ -64,7 +80,7 @@ public class Draw : MonoBehaviour
             .Build();
     }
 
-    MoveCard.CustomTransform BuildTransform(Vector3 startPosition,
+    CustomTransform BuildTransform(Vector3 startPosition,
         Vector3 targetPosition,
         Vector4 startRotation,
         Vector4 targetRotation,
@@ -73,7 +89,7 @@ public class Draw : MonoBehaviour
         float time)
     {
 
-        return MoveCard.CustomTransform.builder()
+        return CustomTransform.builder()
             .position(targetPosition)
             .rotation(targetRotation)
             .scale(targetScale)
@@ -83,25 +99,30 @@ public class Draw : MonoBehaviour
             .Build();
     }
 
+    float roundUp(float number)
+    {
+        return Mathf.Ceil(number * 100) / 100;
+    }
+
     void DrawAnimation()
     {
-        move.ToTarget(drawFirstStep);
+        move.ToTarget(drawFlipSpot);
     }
 
     public void CompletedMoveCallback(Guid guid)
     {
-        if (drawFirstStep != null && guid.Equals(drawFirstStep.id))
+        if (drawFlipSpot != null && guid.Equals(drawFlipSpot.id))
         {
             card.Flip();
-            move.ToTarget(drawSecondStep);
+            move.ToTarget(drawShowCaseSpot);
         }
 
-        else if (drawSecondStep != null && guid.Equals(drawSecondStep.id))
+        else if (drawShowCaseSpot != null && guid.Equals(drawShowCaseSpot.id))
         {
             StartCoroutine(MoveToHand());
         }
 
-        else if (handPoint != null && guid.Equals(handPoint.id))
+        else if (drawOnHand != null && guid.Equals(drawOnHand.id))
         {
             card.IsDrawed();
             this.enabled = false;
@@ -111,6 +132,6 @@ public class Draw : MonoBehaviour
     IEnumerator MoveToHand()
     {
         yield return new WaitForSecondsRealtime(0.5f);
-        move.ToTarget(handPoint);
+        move.ToTarget(drawOnHand);
     }
 }
